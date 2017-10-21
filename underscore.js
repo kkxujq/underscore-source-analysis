@@ -6,11 +6,15 @@
 (function() {
 
   // Baseline setup
+  // 基础设置
   // --------------
 
   // Establish the root object, `window` (`self`) in the browser, `global`
   // on the server, or `this` in some virtual machines. We use `self`
   // instead of `window` for `WebWorker` support.
+  // 1. 在浏览器环境中，`window`和`self`都指向全局Window对象，所以此处未写`window`
+  // 2. 在`non-window`环境，比如service workers和web workers，没有窗体即`window`，此时只有全局`self`
+  // 3. `global`是Node环境中dd
   var root = typeof self == 'object' && self.self === self && self ||
             typeof global == 'object' && global.global === global && global ||
             this ||
