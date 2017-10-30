@@ -3,38 +3,23 @@
 //     (c) 2009-2017 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
 //     Underscore may be freely distributed under the MIT license.
 
-// 将所有函数和变量置于IIFE（Immediately-invoked function expression）中
-// 避免污染全局对象
 (function() {
 
   // Baseline setup
-  // 基础设置
   // --------------
 
   // Establish the root object, `window` (`self`) in the browser, `global`
   // on the server, or `this` in some virtual machines. We use `self`
   // instead of `window` for `WebWorker` support.
-  // 1. 在浏览器环境中，`window`和`self`都指向全局Window对象，所以此处未写`window`
-  // 2. 在`non-window`环境，比如service workers和web workers，没有窗体即`window`，此时只有全局`self`
-  // 3. `global`是Node环境中全局变量
-  // `typeof self == 'object'`全局命名空间不一定完全等价为对象，这跟宿主环境的实现有关
-  // 在之前版本中是`var root = this;`，此处是underscore.js借鉴lodash.js
   var root = typeof self == 'object' && self.self === self && self ||
             typeof global == 'object' && global.global === global && global ||
             this ||
             {};
 
   // Save the previous value of the `_` variable.
-  // 将全局变量中的属性`_`赋值给变量`previousUnderscore`进行缓存
-  // `previousUnderscore`变量在源码第1390行`root._ = previousUnderscore;`使用
   var previousUnderscore = root._;
 
   // Save bytes in the minified (but not gzipped) version:
-  // 将`Array`、`Object`、和`Symbol`的`prototype`缓存，
-  // 方便代码「压缩」到min.js，减少代码行数
-  // 此处「压缩」非压缩到gzip
-  // [`Symbol`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Symbol)是ES6标准中的第七种数据类型，
-  // `Symbol`是为了避免代码冲突而设计，比如对象的属性等
   var ArrayProto = Array.prototype, ObjProto = Object.prototype;
   var SymbolProto = typeof Symbol !== 'undefined' ? Symbol.prototype : null;
 
@@ -1401,14 +1386,6 @@
 
   // Run Underscore.js in *noConflict* mode, returning the `_` variable to its
   // previous owner. Returns a reference to the Underscore object.
-  // 如果全局环境中已经使用了 `_` 变量
-  // 可以用该方法返回其他变量
-  // 继续使用 underscore 中的方法
-  // var underscore = _.noConflict(); // 运行`noConflict`模式
-  // underscore.each(..);
-  // 在外部可执行 var underscore_cache = _.noConflict(); 用来重新定义 underscore 命名，很简单也很巧妙，
-  // noConflict 方法内将 root._ 也就是 window._ 重新定义为 previousUnderscore （previousUnderscore = undefined），
-  // 而 noConflict 是_的一个属性方法，所以 this 指向其自身（源码第41行），即将 _ 赋值给了 underscore_cache。
   _.noConflict = function() {
     root._ = previousUnderscore;
     return this;
