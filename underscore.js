@@ -35,22 +35,28 @@
   // 此处「压缩」非压缩到gzip
   // [`Symbol`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Symbol)是ES6标准中的第七种数据类型，
   // `Symbol`是为了避免代码冲突而设计，比如对象的属性等
+  // 老版本中还缓存了`FuncProto = Function.prototype`
   var ArrayProto = Array.prototype, ObjProto = Object.prototype;
   var SymbolProto = typeof Symbol !== 'undefined' ? Symbol.prototype : null;
 
   // Create quick reference variables for speed access to core prototypes.
+  // 1. 缓存变量，便于压缩代码；
+  // 2. 减少原型链中查找次数，提高代码效率
   var push = ArrayProto.push,
       slice = ArrayProto.slice,
-      toString = ObjProto.toString,
+      toString = ObjProto.toString,   
       hasOwnProperty = ObjProto.hasOwnProperty;
 
   // All **ECMAScript 5** native function implementations that we hope to use
   // are declared here.
+  // 缓存变量，便于压缩和原型链中查找
   var nativeIsArray = Array.isArray,
       nativeKeys = Object.keys,
-      nativeCreate = Object.create;
+      nativeCreate = Object.create; // ES5方法，用于原型继承
 
   // Naked function reference for surrogate-prototype-swapping.
+  // 定义一个空构造函数，在源码第135行通过原型继承创建对象时使用
+  // Ctor 用来实现没有 Object.create 函数时原型继承创建对象.
   var Ctor = function(){};
 
   // Create a safe reference to the Underscore object for use below.
@@ -147,12 +153,18 @@
   };
 
   // An internal function for creating a new object that inherits from another.
+  // 通过原型继承创建一个新对象
   var baseCreate = function(prototype) {
+    // 如果 prototype 参数不是对象，除null外
     if (!_.isObject(prototype)) return {};
+
+    // 使用 ES5 Object.create 函数
     if (nativeCreate) return nativeCreate(prototype);
-    Ctor.prototype = prototype;
-    var result = new Ctor;
-    Ctor.prototype = null;
+
+    // Ctor 是一个空构造函数
+    Ctor.prototype = prototype;   // 将 Ctor 的原型属性设置为 prototype 对象
+    var result = new Ctor;        // 通过 Ctor 创建原型对象 prototype 的继承对象 result
+    Ctor.prototype = null;        // 置空 Ctor 的原型属性
     return result;
   };
 
