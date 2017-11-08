@@ -41,7 +41,7 @@
 
   // Create quick reference variables for speed access to core prototypes.
   // 1. 缓存变量，便于压缩代码；
-  // 2. 减少原型链中查找次数，提高代码效率
+  // 2. 减少原型链中查找次数，提高代码效率（频繁查找会损耗性能）
   var push = ArrayProto.push,
       slice = ArrayProto.slice,
       toString = ObjProto.toString,   
@@ -60,9 +60,23 @@
   var Ctor = function(){};
 
   // Create a safe reference to the Underscore object for use below.
+  // underscore.js有两种调用方式：OOP调用和链式调用
+  // 
+  ////////////////////////////////////////////////////////////////////
+  // `_`是一个支持无 `new` 调用的构造函数
+  // 通过`_()`构造实例对象
+  // 假设我们执行`_([0])`, 函数中的`this`指向`window`或`global`全局变量，
+  // 此时: `obj instanceof _ === false`, 且`this instanceof _ === false`,
+  // 则: `return new _(obj)`创建实力对象，其`this`指向构造函数`_`的实例本身，
+  // 构造函数实例对象的属性`_wrapped`值为`obj`
   var _ = function(obj) {
+    // 如果`obj`是`_`实例对象，直接返回
     if (obj instanceof _) return obj;
+
+    // new一个实例对象，`this`指向构造函数`_`的实例对象自身
     if (!(this instanceof _)) return new _(obj);
+
+    // 构造函数实例对象的属性`_wrapped`值为`obj`
     this._wrapped = obj;
   };
 
