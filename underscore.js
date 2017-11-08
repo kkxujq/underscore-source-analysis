@@ -60,8 +60,12 @@
   var Ctor = function(){};
 
   // Create a safe reference to the Underscore object for use below.
-  // underscore.js有两种调用方式：OOP调用和链式调用
-  // 
+  // underscore.js有两种调用方式：OOP调用和常规调用
+  // 常规调用是其官方文档中的调用方式，如：`_.each([1, 2, 3], alert);`
+  // OOP调用如：`_([1, 2, 3]).each(alert);`
+  // 在underscore.js中`_`实际上是一个函数（如下面的代码），而常规调用的方法是该函数上挂载的属性（**一切皆对象**）
+  // 1. `_`是一个函数（支持无`new`调用的构造函数）；2. `_`有很多属性方法，比如`_.each`, 可以在 DevTools 中用 `console.dir(_)`查看
+  // `_`构造实例调用方法其实来自`_`原型链
   ////////////////////////////////////////////////////////////////////
   // `_`是一个支持无 `new` 调用的构造函数
   // 通过`_()`构造实例对象
@@ -69,6 +73,7 @@
   // 此时: `obj instanceof _ === false`, 且`this instanceof _ === false`,
   // 则: `return new _(obj)`创建实力对象，其`this`指向构造函数`_`的实例本身，
   // 构造函数实例对象的属性`_wrapped`值为`obj`
+  // 非OOP调用方式不会进入该函数内部
   var _ = function(obj) {
     // 如果`obj`是`_`实例对象，直接返回
     if (obj instanceof _) return obj;
@@ -77,6 +82,7 @@
     if (!(this instanceof _)) return new _(obj);
 
     // 构造函数实例对象的属性`_wrapped`值为`obj`
+    // 在`_.mixin`中有用到`_wrapped`
     this._wrapped = obj;
   };
 
@@ -1670,10 +1676,19 @@
   };
 
   // Add your own custom functions to the Underscore object.
+  // 向 underscore.js 扩展自己的方法
+  // 如：`_.mixin({fn: () => true})`，然后使用 `_.fn(...)` 或 `_(...).fn(...)`
   _.mixin = function(obj) {
+    // 遍历 `obj` 的 `key` , 将方法挂载到 Underscore 上
+    // 其实是将方法浅拷贝到 `_.prototype` 上
     _.each(_.functions(obj), function(name) {
+      // 直接把方法挂载到 _[name] 上
       var func = _[name] = obj[name];
+
+      // 浅拷贝
+      // 将 `name` 方法挂在到 `_` 原型链上，使 OOP 构造实例能调用
       _.prototype[name] = function() {
+        // 第一个参数
         var args = [this._wrapped];
         push.apply(args, arguments);
         return chainResult(this, func.apply(_, args));
