@@ -19,6 +19,8 @@
   // 3. `global`是Node环境中全局变量
   // `typeof self == 'object'`全局命名空间不一定完全等价为对象，这跟宿主环境的实现有关
   // 在之前版本中是`var root = this;`，此处是underscore.js借鉴lodash.js
+  // 这里 `self == 'object'` 没有使用严格等于是因为全局命名空间 self/window/global 因为其宿主环境（浏览器、workers、node.js）
+  // 对其实现不一定完全等价于对象
   var root = typeof self == 'object' && self.self === self && self ||
             typeof global == 'object' && global.global === global && global ||
             this ||
@@ -91,16 +93,24 @@
   // the browser, add `_` as a global object.
   // (`nodeType` is checked to ensure that `module`
   // and `exports` are not HTML elements.)
+  // 将前面定义的 `_` 局部变量赋值给全局对象
+  // module.exports 初始值为一个空对象 {}
+  // exports 是指向的 module.exports 的引用
+  // require() 返回的是 module.exports 而不是 exports
   if (typeof exports != 'undefined' && !exports.nodeType) {
     if (typeof module != 'undefined' && !module.nodeType && module.exports) {
+      // exports 是指向的 module.exports 的引用
+      // `module.exports = _` 时 `module.exports` 指向了一个新的引用 
       exports = module.exports = _;
     }
+    // 主要是为了老node版本的module语法支持[]
     exports._ = _;
   } else {
     root._ = _;
   }
 
   // Current version.
+  // 当前版本
   _.VERSION = '1.8.3';
 
   // Internal function that returns an efficient (for current engines) version
@@ -1678,6 +1688,8 @@
   // Add your own custom functions to the Underscore object.
   // 向 underscore.js 扩展自己的方法
   // 如：`_.mixin({fn: () => true})`，然后使用 `_.fn(...)` 或 `_(...).fn(...)`
+  // https://ruiming.me/underscore-mixin/
+  // https://github.com/hanzichi/underscore-analysis/issues/27
   _.mixin = function(obj) {
     // 遍历 `obj` 的 `key` , 将方法挂载到 Underscore 上
     // 其实是将方法浅拷贝到 `_.prototype` 上
