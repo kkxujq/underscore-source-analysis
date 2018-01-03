@@ -116,8 +116,12 @@
   // Internal function that returns an efficient (for current engines) version
   // of the passed-in callback, to be repeatedly applied in other Underscore
   // functions.
+  // optimizeCb 用在后面的 cb 函数中
+  // argCount arguments的参数个数
   var optimizeCb = function(func, context, argCount) {
     if (context === void 0) return func;
+
+    // 根据 arguments 的参数个数选择执行方法
     switch (argCount) {
       case 1: return function(value) {
         return func.call(context, value);
