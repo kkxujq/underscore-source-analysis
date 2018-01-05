@@ -119,6 +119,7 @@
   // optimizeCb 用在后面的 cb 函数中
   // argCount arguments的参数个数
   var optimizeCb = function(func, context, argCount) {
+    // 如果上下文定义 this 为空, 则返回原函数
     if (context === void 0) return func;
 
     // 根据 arguments 的参数个数选择执行方法
@@ -128,25 +129,40 @@
       };
       // The 2-parameter case has been omitted only because no current consumers
       // made use of it.
+      // 目前没有两个参数的场景, 所以这种情况省略
       case null:
+
+      // _.each、 _.map
       case 3: return function(value, index, collection) {
         return func.call(context, value, index, collection);
       };
+
+      // _.reduce、 _.reduceRight
       case 4: return function(accumulator, value, index, collection) {
         return func.call(context, accumulator, value, index, collection);
       };
     }
+
+    // 在 arguments 的个数都不匹配 switch-case 情况下执行 `.apply(content, arguments)`
+    // 直接返回`.apply(content, arguments)`也是可行的
+    // 之所以根据参数个数选择`.call`是因为 ** call 比 apply 性能好很多**
+    // .apply 在运行前需要对参数数组做检验和深拷贝
     return function() {
       return func.apply(context, arguments);
     };
   };
 
+  // 内置迭代器
   var builtinIteratee;
 
   // An internal function to generate callbacks that can be applied to each
   // element in a collection, returning the desired result — either `identity`,
   // an arbitrary callback, a property matcher, or a property accessor.
   var cb = function(value, context, argCount) {
+    // 在后面的定义中有 `_.iteratee = builtinIteratee = function...`, 就是说`_.iteratee` 和 `builtinIteratee` 引用同一个对象
+    // 所以一般情况下有 `_.iteratee(value, context)` 不会执行
+    // 如果我们在外部修改了 `_.iteratee` 的指向就会返回 `_.iteratee(value, context)`
+    // 也就是说使用我们自定义的 `iteratee` 函数处理 `value` 和 `content` 
     if (_.iteratee !== builtinIteratee) return _.iteratee(value, context);
     if (value == null) return _.identity;
     if (_.isFunction(value)) return optimizeCb(value, context, argCount);
@@ -158,6 +174,7 @@
   // `_.iteratee` if they want additional predicate/iteratee shorthand styles.
   // This abstraction hides the internal-only argCount argument.
   _.iteratee = builtinIteratee = function(value, context) {
+    // argCount = Infinity 参数个数「无穷大」
     return cb(value, context, Infinity);
   };
 
