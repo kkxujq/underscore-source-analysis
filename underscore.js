@@ -164,8 +164,11 @@
     // 如果我们在外部修改了 `_.iteratee` 的指向就会返回 `_.iteratee(value, context)`
     // 也就是说使用我们自定义的 `iteratee` 函数处理 `value` 和 `content` 
     if (_.iteratee !== builtinIteratee) return _.iteratee(value, context);
+    // 如果 value 为空则返回 _.identity 函数，该函数用来返回原值，相当于用户未定义处理方法
     if (value == null) return _.identity;
+    // 如果 value 是方法则执行 optimizeCb 函数
     if (_.isFunction(value)) return optimizeCb(value, context, argCount);
+    // 如果 value 是对象且不为数组则返回一个断言函数结果，用来判定传入对象是否匹配attrs指定键/值属性
     if (_.isObject(value) && !_.isArray(value)) return _.matcher(value);
     return _.property(value);
   };
@@ -238,6 +241,8 @@
   // should be iterated as an array or as an object.
   // Related: http://people.mozilla.org/~jorendorff/es6-draft.html#sec-tolength
   // Avoids a very nasty iOS 8 JIT bug on ARM-64. #2094
+
+  // 最大整数范围 Number.MAX_SAFE_INTEGER === Math.pow(2, 53) - 1
   var MAX_ARRAY_INDEX = Math.pow(2, 53) - 1;
   var getLength = shallowProperty('length');
   var isArrayLike = function(collection) {
@@ -246,33 +251,50 @@
   };
 
   // Collection Functions
+  // 集合函数
   // --------------------
 
   // The cornerstone, an `each` implementation, aka `forEach`.
   // Handles raw objects in addition to array-likes. Treats all
   // sparse array-likes as if they were dense.
+  // `_.each` 和 `_.forEach`同时指向一个函数
+  // 与 Array.prototype.forEach 方法类似
+  // 第一个参数为类数组对象，如 `arguments` 、`NodeList`...
+  // 第二个参数为迭代方法，对数组或者每个对象都执行该方法
+  // 第三个参数和 Array.prototype.forEach 中第二个参数一致，
+  // 当执行回调函数（迭代方法）时用作 this 的值(参考对象)
+  // 由于内部使用 for 循环实现，所以执行过程中不能 return 跳出循环, 次特性跟 Array.prototype.forEach 方法一致
   _.each = _.forEach = function(obj, iteratee, context) {
+    // 这里会根据 `context` 调取不同迭代函数
     iteratee = optimizeCb(iteratee, context);
     var i, length;
+    // 类数组
     if (isArrayLike(obj)) {
       for (i = 0, length = obj.length; i < length; i++) {
         iteratee(obj[i], i, obj);
       }
     } else {
+      // obj 为对象, 获取 key 值，遍历处理所有 values 值
       var keys = _.keys(obj);
       for (i = 0, length = keys.length; i < length; i++) {
         iteratee(obj[keys[i]], keys[i], obj);
       }
     }
+
+    // 返回 obj 参数，供链式调用
     return obj;
   };
 
   // Return the results of applying the iteratee to each element.
+  // _.map 和 _.each 最大区别在于返回值
+  // _.map 返回了处理后的数组集合 _.each 返回了原处理对象
   _.map = _.collect = function(obj, iteratee, context) {
+    // 这里没有直接使用 optimizeCb 方法应该是为了区别与 obj 为数组时的情况
     iteratee = cb(iteratee, context);
+    // keys 为对象 key 数组集合或 false
     var keys = !isArrayLike(obj) && _.keys(obj),
         length = (keys || obj).length,
-        results = Array(length);
+        results = Array(length);  // 结果数组
     for (var index = 0; index < length; index++) {
       var currentKey = keys ? keys[index] : index;
       results[index] = iteratee(obj[currentKey], currentKey, obj);
