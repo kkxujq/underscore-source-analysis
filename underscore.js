@@ -222,12 +222,16 @@
     return result;
   };
 
+  // 闭包
+  // 同时规避了处理对象为 null 的情况
   var shallowProperty = function(key) {
     return function(obj) {
       return obj == null ? void 0 : obj[key];
     };
   };
 
+  // 用于获取对象深层次的值, 可以避免未定义的键导致报错问题
+  // 比如 deepGet(obj, ['attr0', 'attr1', 'attr2'...])
   var deepGet = function(obj, path) {
     var length = path.length;
     for (var i = 0; i < length; i++) {
@@ -244,8 +248,17 @@
 
   // 最大整数范围 Number.MAX_SAFE_INTEGER === Math.pow(2, 53) - 1
   var MAX_ARRAY_INDEX = Math.pow(2, 53) - 1;
+
+  // shallowProperty 是闭包
+  // getLength 的结果是一个能返回目标对象 length 属性值的函数
   var getLength = shallowProperty('length');
+
+  // 判断对象是否为 ArrayLike
+  // 类数组，即拥有 length 属性并且 length 属性为 Number 类型的对象
+  // arguments、HTML Collection 以及 NodeList等
+  // 同时包含类似 {length： 10} 类似的对象
   var isArrayLike = function(collection) {
+    // 返回参数 collection 的 length 属性值
     var length = getLength(collection);
     return typeof length == 'number' && length >= 0 && length <= MAX_ARRAY_INDEX;
   };
@@ -329,9 +342,15 @@
 
   // **Reduce** builds up a single result from a list of values, aka `inject`,
   // or `foldl`.
+  // 与 ES5 中 Array.prototype.reduce 使用方法类似
+  // _.reduce(list, iteratee, [memo], [context])
+  // _.reduce 方法最多可传入 4 个参数
+  // memo 为初始值，可选
+  // context 为指定 iteratee 中 this 指向，可选
   _.reduce = _.foldl = _.inject = createReduce(1);
 
   // The right-associative version of reduce, also known as `foldr`.
+  // 与 ES5 中 Array.prototype.reduceRight 使用方法类似
   _.reduceRight = _.foldr = createReduce(-1);
 
   // Return the first value which passes a truth test. Aliased as `detect`.
